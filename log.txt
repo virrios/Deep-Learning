@@ -1,0 +1,70 @@
+git add README.md 
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git commit -m "first commit1"
+On branch master
+nothing to commit, working directory clean
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git remote add origin git@github.com:virrios/Deep-Learning.git
+fatal: remote origin already exists.
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git push -u origin master
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 227 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To git@github.com:virrios/Deep-Learning.git
+ * [new branch]      master -> master
+Branch master set up to track remote branch master from origin.
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ cd
+victor@victor-SATELLITE-Z30-B:~$ cd Desktop/Matlab-Files/Deep-Learning/
+victor@victor-SATELLITE-Z30-B:~/Desktop/Matlab-Files/Deep-Learning$ git init
+Reinitialized existing Git repository in /home/victor/Desktop/Matlab-Files/Deep-Learning/.git/
+victor@victor-SATELLITE-Z30-B:~/Desktop/Matlab-Files/Deep-Learning$ git add *.m
+fatal: Unable to create '/home/victor/Desktop/Matlab-Files/Deep-Learning/.git/index.lock': File exists.
+
+If no other git process is currently running, this probably means a
+git process crashed in this repository earlier. Make sure no other git
+process is running and remove the file manually to continue.
+victor@victor-SATELLITE-Z30-B:~/Desktop/Matlab-Files/Deep-Learning$ ls
+Assignment 1  Assignment 2  Asskgnment3.m  Datasets  Result_Pics  StartMatlab
+victor@victor-SATELLITE-Z30-B:~/Desktop/Matlab-Files/Deep-Learning$ git add Asskgnment3.m 
+fatal: Unable to create '/home/victor/Desktop/Matlab-Files/Deep-Learning/.git/index.lock': File exists.
+
+If no other git process is currently running, this probably means a
+git process crashed in this repository earlier. Make sure no other git
+process is running and remove the file manually to continue.
+victor@victor-SATELLITE-Z30-B:~/Desktop/Matlab-Files/Deep-Learning$ cd
+victor@victor-SATELLITE-Z30-B:~$ cd Documents/DeepLearningGit/
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ ls
+README.md
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git add Asskgnment3.m 
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git commit -m "assignment 3 ongoing" 
+[master 2cbdaa8] assignment 3 ongoing
+ 1 file changed, 517 insertions(+)
+ create mode 100644 Asskgnment3.m
+victor@victor-SATELLITE-Z30-B:~/Documents/DeepLearningGit$ git push 
+warning: push.default is unset; its implicit value has changed in
+Git 2.0 from 'matching' to 'simple'. To squelch this message
+and maintain the traditional behavior, use:
+
+  git config --global push.default matching
+
+To squelch this message and adopt the new behavior now, use:
+
+  git config --global push.default simple
+
+When push.default is set to 'matching', git will push local branches
+to the remote branches that already exist with the same name.
+
+Since Git 2.0, Git defaults to the more conservative 'simple'
+behavior, which only pushes the current branch to the corresponding
+remote branch that 'git pull' uses to update the current branch.
+
+See 'git help config' and search for 'push.default' for further information.
+(the 'simple' mode was introduced in Git 1.7.11. Use the similar mode
+'current' instead of 'simple' if you sometimes use older versions of Git)
+
+Counting objects: 3, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 4.57 KiB | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To git@github.com:virrios/Deep-Learning.git
+   7bb54cf..2cbdaa8  master -> master
+
