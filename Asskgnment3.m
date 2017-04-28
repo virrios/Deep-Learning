@@ -28,8 +28,8 @@ m3 = 20
 %% initialize parameters.
 
 m(1)=m1;
-m(2)=m2;
-m(3) =m3
+% m(2)=m2;
+% m(3) =m3
 
 margin = 1.0000e-5;
 %% store weights and bias in cell array
@@ -50,29 +50,29 @@ ComputeCost(Xtrain, Ytrain, Weights, bias, lambda)
 
 %% Training settings
  
-% lambda = 0.001;%0.001 % training
-% GDparams.n_batch = 128
-% GDparams.n_epochs = 30;  % roughly around 5 to find good learning rate.
-% GDparams.eta = 0.04; %% plottat 0.0467,
-% 
-% rho = 0.9 % set to 0.5,0.9, 0.99/ use 0.9 in training.
-% decay_rate =0.95;  % works with 1 aswell
-% GDparams.rho = rho;
-% GDparams.decay_rate=decay_rate;
-% 
+lambda = 0.001;%0.001 % training
+GDparams.n_batch = 128
+GDparams.n_epochs = 30;  % roughly around 5 to find good learning rate.
+GDparams.eta = 0.04; %% plottat 0.0467,
 
-%% How many datapoints used
-% numOfsamplestrain = size(Xtrain,2);
-% X.train =Xtrain(:,1:numOfsamplestrain);
-% numOfsamplesval = 1000;
-% X.val = Xval(:,1:numOfsamplesval);
-% Y.train = Ytrain(:,1:numOfsamplestrain);
-% Y.val  = Yval(:,1:numOfsamplesval);
-% 
+rho = 0.9 % set to 0.5,0.9, 0.99/ use 0.9 in training.
+decay_rate =0.95;  % works with 1 aswell
+GDparams.rho = rho;
+GDparams.decay_rate=decay_rate;
+
+
+% How many datapoints used
+numOfsamplestrain = 1000
+X.train =Xtrain(:,1:numOfsamplestrain);
+numOfsamplesval = 1000;
+X.val = Xval(:,1:numOfsamplesval);
+Y.train = Ytrain(:,1:numOfsamplestrain);
+Y.val  = Yval(:,1:numOfsamplesval);
+
 %% minibatch and display the accuracy 
 % 
-% [Wstar,bstar] = MiniBatchGD(X,Y,GDparams,Weights,bias,lambda);
-% accuracy = ComputeAccuracy(Xtest,ytest,Wstar,bstar)
+[Wstar,bstar] = MiniBatchGD(X,Y,GDparams,Weights,bias,lambda);
+accuracy = ComputeAccuracy(Xtest,ytest,Wstar,bstar)
 
 % %% display resulting images 
 % for i=1:10
@@ -114,15 +114,19 @@ costval = zeros(1,n_epochs);
 epochs = zeros(1,n_epochs);
 
 
-k = size(W,2);
+k = size(W,1);
 % for each epoch compute gradients for each minibatch.
 
 %%initialize momentum params
-vgradW = cell(1,k);
-vgradb = cell(1,k);
+vgradW = cell(k,1);
+vgradb = cell(k,1);
 for i=1:k
-    vgradW(i) =	zeros(size(W(i)));
-    vgradb(i)= zeros(size(b(i)));
+    Wi =cell2mat(W(i));
+    bi = cell2mat(b(i));
+%     size(Wi)
+%     size(bi)
+    vgradW(i) =	{zeros(size(Wi))};
+    vgradb(i)= {zeros(size(bi))};
     
 end
 
@@ -145,11 +149,20 @@ for epoch = 1:n_epochs
          grad_Witemp = cell2mat(grad_Wtemp(i));
          grad_bitemp = cell2mat(grad_btemp(i));
          %%initialize....
-         vgradW(i) = rho*vgradW(i) + eta*grad_Witemp;
-         vgradb(i)= rho*vgradb(i) + eta*grad_bitemp;
-         
-          W(i) = cell2mat(W(i)) -vgradW(i);
-          b(i) = cell2mat(b(i)) -vgradb(i);
+         vgradW(i) = {rho*cell2mat(vgradW(i)) + eta*grad_Witemp};
+         vgradb(i)= {rho*cell2mat(vgradb(i)) + eta*grad_bitemp};
+         Witemp = cell2mat(W(i));
+%          size(Witemp)
+         vgradWtemp = cell2mat(vgradW(i));
+%          size(vgradWtemp)
+%          size(Witemp-vgradWtemp)
+         bitemp = cell2mat(b(i));
+%          size(bitemp)
+         vgradbtemp = cell2mat(vgradb(i));
+%          size(bitemp-vgradbtemp)
+
+          W(i) = {Witemp-vgradWtemp};
+          b(i) = {bitemp-vgradbtemp};
          end
     end
     
@@ -197,7 +210,7 @@ function [grad_b,grad_W] = ComputeGradients(X,Y,P,x,s,W,b,lambda)
     % b1 m × 1 
     % b2 K × 1 
 
-k = size(W,1)
+k = size(W,1);
     
 gradJ_WAvg = cell(k,1);
 gradJ_bAvg = cell(k,1);
@@ -208,19 +221,19 @@ gradJ_b = cell(k,1);
 
 
 for i = 1:k
-    display("hello elr")
+%     display("hello elr")
 %% initialize b NECCESARY?
-sizebi = size(cell2mat(b(i)))
-sizeWi = size(cell2mat(W(i)))
+sizebi = size(cell2mat(b(i)));
+sizeWi = size(cell2mat(W(i)));
 gradJ_b(i)= {zeros(sizebi)};% står d i slides but must be wrong 
 gradJ_W(i) = {zeros(sizeWi)};
-storedsizebi =size(cell2mat(gradJ_b(i)))
-storedsizeWi =size(cell2mat(gradJ_W(i)))
+% storedsizebi =size(cell2mat(gradJ_b(i)))
+% storedsizeWi =size(cell2mat(gradJ_W(i)))
 end
-sizeBgrad = gradJ_b
-sizeWgrad = gradJ_W
-komigennUb1= size(cell2mat(gradJ_b(1)))
-komigennUb2 =size(cell2mat(gradJ_b(2)))
+% sizeBgrad = gradJ_b
+% sizeWgrad = gradJ_W
+% komigennUb1= size(cell2mat(gradJ_b(1)))
+% komigennUb2 =size(cell2mat(gradJ_b(2)))
 
 % for every picture calculate calculate gradients, sum gradients for b and
 % W, in order to take avarage.
@@ -228,8 +241,8 @@ for i = 1 : N
     Xbat = X(:,i); 
     YT= Y(:,i)';   
     Ptemp = P(:,i); 
-    size(YT)
-    size(Ptemp)% probabilities for the classes for one image per loop iteration 
+%     size(YT);
+%     size(Ptemp)% probabilities for the classes for one image per loop iteration 
     YTP = YT*Ptemp; % correct  dim: 1x1
     Pdiag = diag(Ptemp);
     PPT = Ptemp*Ptemp';
@@ -245,10 +258,10 @@ for i = 1 : N
     for j = k:-1:1 
     %%isplay("innie i for")
     gradJbitemp = cell2mat(gradJ_b(j));
-    gradJbiSize= size(gradJbitemp)
-    gisizebeforbi = size(g)
+%     gradJbiSize= size(gradJbitemp)
+%     gisizebeforbi = size(g)
     gradJbitemp = gradJbitemp + g';
-    komigennugradBj = size(gradJbitemp)
+%     komigennugradBj = size(gradJbitemp)
     gradJ_b(j) = {gradJbitemp};
     %% tror det har makes sense, lsm för varje bild, do every h for varje W
     %% Kan vara fel har med x(j-1) men andrade fran 0-k-1 to 1-k
@@ -260,7 +273,7 @@ for i = 1 : N
     %sizehtemp = size(htemp)
    ghtemp =  g'*htemp';
     gradJ_wi = cell2mat(gradJ_W(j));
-    sizegradJWi = size(gradJ_wi)
+%     sizegradJWi = size(gradJ_wi)
     gradJ_W(j) = {gradJ_wi +  ghtemp + 2*lambda*cell2mat(W(j))}; % g': Kx1 h:mxN => h(:,i)' = 1xm, => gJW2 = Kxm
     %step 3
         if(j>1)
@@ -287,8 +300,8 @@ end
 %% should probably be removed?
 for i = 1:k
 % avarge gradients for W  and b, and add regularization term to gradients for W.
-gradJ_WAvg(i) = {cell2mat(gradJ_W(i))./N} 
-gradJ_bAvg(i) = {cell2mat(gradJ_b(i))./N}   
+gradJ_WAvg(i) = {cell2mat(gradJ_W(i))./N};
+gradJ_bAvg(i) = {cell2mat(gradJ_b(i))./N};  
  
 end
 
@@ -302,7 +315,7 @@ end
 
 function [errorb,errorW,sumerrorb,sumerrorW]= displayError(grad_b,grad_bnum,grad_W, grad_Wnum,margin)
 
-k = size(grad_W,1)
+k = size(grad_W,1);
 % kinError = k
 errorb= cell(1,k);
 errorW = cell(1,k);
