@@ -1,0 +1,6 @@
+git branch
+//checks which branches exits and current branch you are in
+git branch newbranch 
+//creates a new branch called newbranch
+git checkout newbranch
+//switches to the newbranch
