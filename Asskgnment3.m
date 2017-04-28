@@ -6,14 +6,14 @@ clc;
 %% initialization. 
 addpath Datasets/cifar-10-batches-mat/;
 [Xtrain,Ytrain,ytrain]= LoadBatch('data_batch_1.mat');
-[Xval,Ytval,yval]= LoadBatch('data_batch_2.mat');
+[Xval,Yval,yval]= LoadBatch('data_batch_2.mat');
 %% for using all bathces as training
  [Xtest,Ytest,ytest]= LoadBatch('test_batch.mat');
 
 
 
 %% REMOVE WHEN DOING LARGE TRAINIG!
-mean_X = mean(Xtrain,2)
+mean_X = mean(Xtrain,2);
 [Xtrain,Xval,Xtest] =  subtractMean(mean_X,Xtrain,Xval,Xtest); % Maybe not subtract from the training.
 %% first initializations
 [d,N] = size(Xtrain);
@@ -24,47 +24,55 @@ seed = 400;
 
 m1 = 50;
 m2= 30
+m3 = 20
 %% initialize parameters.
 
 m(1)=m1;
 m(2)=m2;
+m(3) =m3
 
+margin = 1.0000e-5;
 %% store weights and bias in cell array
 %
+lambda =0;
+numOfsamples=3;
 [Weights,bias] = initializeParams(m,K,d,seed,stnDeviation);
 
-
-
-
+[P,h,s] = EvaluateClassifier(Xtrain(:,1:numOfsamples), Weights,bias);
+[grad_b,grad_W] = ComputeGradients(Xtrain(:,1:numOfsamples),Ytrain(:,1:numOfsamples),P,h,s,Weights,bias,lambda);
+test = cell2mat(grad_b(2));
+ComputeCost(Xtrain, Ytrain, Weights, bias, lambda)
+% [grad_bnum, grad_Wnum] = ComputeGradsNum(Xtrain(:,1:numOfsamples), Ytrain(:,1:numOfsamples), Weights, bias, lambda, margin);
+% [errorb,errorW,sumErrorb,sumErrorW]= displayError(grad_b,grad_bnum,grad_W, grad_Wnum,margin);
 
 
 %% real deal
 
 %% Training settings
  
-lambda = 0.001;%0.001 % training
-GDparams.n_batch = 128
-GDparams.n_epochs = 30;  % roughly around 5 to find good learning rate.
-GDparams.eta = 0.04; %% plottat 0.0467,
-
-rho = 0.9 % set to 0.5,0.9, 0.99/ use 0.9 in training.
-decay_rate =0.95;  % works with 1 aswell
-GDparams.rho = rho;
-GDparams.decay_rate=decay_rate;
-
+% lambda = 0.001;%0.001 % training
+% GDparams.n_batch = 128
+% GDparams.n_epochs = 30;  % roughly around 5 to find good learning rate.
+% GDparams.eta = 0.04; %% plottat 0.0467,
+% 
+% rho = 0.9 % set to 0.5,0.9, 0.99/ use 0.9 in training.
+% decay_rate =0.95;  % works with 1 aswell
+% GDparams.rho = rho;
+% GDparams.decay_rate=decay_rate;
+% 
 
 %% How many datapoints used
-numOfsamplestrain = size(Xtrain,2);
-X.train =Xtrain(:,1:numOfsamplestrain);
-numOfsamplesval = 1000;
-X.val = Xval(:,1:numOfsamplesval);
-Y.train = Ytrain(:,1:numOfsamplestrain);
-Y.val  = Yval(:,1:numOfsamplesval);
-
+% numOfsamplestrain = size(Xtrain,2);
+% X.train =Xtrain(:,1:numOfsamplestrain);
+% numOfsamplesval = 1000;
+% X.val = Xval(:,1:numOfsamplesval);
+% Y.train = Ytrain(:,1:numOfsamplestrain);
+% Y.val  = Yval(:,1:numOfsamplesval);
+% 
 %% minibatch and display the accuracy 
 % 
-[Wstar,bstar] = MiniBatchGD(X,Y,GDparams,Weights,bias,lambda);
-accuracy = ComputeAccuracy(Xtest,ytest,Wstar,bstar)
+% [Wstar,bstar] = MiniBatchGD(X,Y,GDparams,Weights,bias,lambda);
+% accuracy = ComputeAccuracy(Xtest,ytest,Wstar,bstar)
 
 % %% display resulting images 
 % for i=1:10
@@ -105,17 +113,18 @@ cost = zeros(1,n_epochs);
 costval = zeros(1,n_epochs);
 epochs = zeros(1,n_epochs);
 
-% for each epoch compute gradients for each minibatch.
-W1 = cell2mat(W(1));
-W2 = cell2mat(W(2));
-b1 = cell2mat(b(1));
-b2 = cell2mat(b(2));
-%%initialize momentum params
-vgradW1 = zeros(size(W1));
-vgradb1 = zeros(size(b1));
-vgradW2 = zeros(size(W2));
-vgradb2 = zeros(size(b2));
 
+k = size(W,2);
+% for each epoch compute gradients for each minibatch.
+
+%%initialize momentum params
+vgradW = cell(1,k);
+vgradb = cell(1,k);
+for i=1:k
+    vgradW(i) =	zeros(size(W(i)));
+    vgradb(i)= zeros(size(b(i)));
+    
+end
 
 
 for epoch = 1:n_epochs
@@ -130,36 +139,18 @@ for epoch = 1:n_epochs
         %% evaluate the current W and b and compute the new gradients. 
         [P,h,s1] = EvaluateClassifier(Xbatch,W,b);
         
-        [grad_btemp,grad_Wtemp] = ComputeGradients(Xbatch,Ybatch,P,h,s1,W,lambda);
-        
-         
-         grad_W1temp = cell2mat(grad_Wtemp(1));
-         grad_b1temp = cell2mat(grad_btemp(1));
-         grad_W2temp = cell2mat(grad_Wtemp(2));
-         grad_b2temp = cell2mat(grad_btemp(2));
+        [grad_btemp,grad_Wtemp] = ComputeGradients(Xbatch,Ybatch,P,h,s1,W,b,lambda);
          %% momentum
-         vgradW1 = rho*vgradW1 + eta*grad_W1temp;
-         vgradb1 = rho*vgradb1 + eta*grad_b1temp;
-         vgradW2 = rho*vgradW2 + eta*grad_W2temp;
-         vgradb2 = rho*vgradb2 + eta*grad_b2temp;
+         for i = 1:k
+         grad_Witemp = cell2mat(grad_Wtemp(i));
+         grad_bitemp = cell2mat(grad_btemp(i));
+         %%initialize....
+         vgradW(i) = rho*vgradW(i) + eta*grad_Witemp;
+         vgradb(i)= rho*vgradb(i) + eta*grad_bitemp;
          
-          W1 = W1 -vgradW1;
-          b1 = b1 -vgradb1;
-          W2 = W2 -vgradW2;
-          b2 = b2 -vgradb2;
-         
-
-         
-%          sizegradB2temo = size(grad_b2temp)
-        %% Update W and b using the computed gradients and the stepsize.
-%         W1 = W1 -(eta*grad_W1temp);
-%         b1 = b1 -(eta*grad_b1temp);
-%         W2 = W2 -(eta*grad_W2temp);
-%         b2 = b2 -(eta*grad_b2temp);
-        
-        %
-        W = {W1,W2};
-        b = {b1,b2};
+          W(i) = cell2mat(W(i)) -vgradW(i);
+          b(i) = cell2mat(b(i)) -vgradb(i);
+         end
     end
     
     %save in order to plot the decreased loss on training and validation.
@@ -193,7 +184,7 @@ Wstar = W;
 bstar = b;
 end
 %% Compute Gradients
-function [grad_b,grad_W] = ComputeGradients(X,Y,P,h,s1,W,lambda)
+function [grad_b,grad_W] = ComputeGradients(X,Y,P,x,s,W,b,lambda)
 %X:dxn
 %Y: Kxn
 %P: Kxn
@@ -206,29 +197,39 @@ function [grad_b,grad_W] = ComputeGradients(X,Y,P,h,s1,W,lambda)
     % b1 m × 1 
     % b2 K × 1 
 
-W1 = cell2mat(W(1));
-W2 = cell2mat(W(2));
+k = size(W,1)
+    
+gradJ_WAvg = cell(k,1);
+gradJ_bAvg = cell(k,1);
+gradJ_W = cell(k,1);
+gradJ_b = cell(k,1);
 
 [K,N] = size(Y);
-[d,~] = size(X);
-[m,~] = size(W1);
 
 
-gradJ_b1= zeros(1,m); % står d i slides but must be wrong 
-gradJ_W1 = zeros(m,d);
-
-gradJ_b2= zeros(1,K);  
-gradJ_W2 = zeros(K,m);
-
-
-hsize = size(h);
+for i = 1:k
+    display("hello elr")
+%% initialize b NECCESARY?
+sizebi = size(cell2mat(b(i)))
+sizeWi = size(cell2mat(W(i)))
+gradJ_b(i)= {zeros(sizebi)};% står d i slides but must be wrong 
+gradJ_W(i) = {zeros(sizeWi)};
+storedsizebi =size(cell2mat(gradJ_b(i)))
+storedsizeWi =size(cell2mat(gradJ_W(i)))
+end
+sizeBgrad = gradJ_b
+sizeWgrad = gradJ_W
+komigennUb1= size(cell2mat(gradJ_b(1)))
+komigennUb2 =size(cell2mat(gradJ_b(2)))
 
 % for every picture calculate calculate gradients, sum gradients for b and
 % W, in order to take avarage.
 for i = 1 : N
     Xbat = X(:,i); 
     YT= Y(:,i)';   
-    Ptemp = P(:,i);   % probabilities for the classes for one image per loop iteration 
+    Ptemp = P(:,i); 
+    size(YT)
+    size(Ptemp)% probabilities for the classes for one image per loop iteration 
     YTP = YT*Ptemp; % correct  dim: 1x1
     Pdiag = diag(Ptemp);
     PPT = Ptemp*Ptemp';
@@ -239,60 +240,100 @@ for i = 1 : N
     
     %%for each layer k.
     % step 2
-    gradJ_b2 = gradJ_b2 + g;
+  %  k
+    %display("hello")
+    for j = k:-1:1 
+    %%isplay("innie i for")
+    gradJbitemp = cell2mat(gradJ_b(j));
+    gradJbiSize= size(gradJbitemp)
+    gisizebeforbi = size(g)
+    gradJbitemp = gradJbitemp + g';
+    komigennugradBj = size(gradJbitemp)
+    gradJ_b(j) = {gradJbitemp};
+    %% tror det har makes sense, lsm för varje bild, do every h for varje W
+    %% Kan vara fel har med x(j-1) men andrade fran 0-k-1 to 1-k
+    h = cell2mat(x(j));
+    %h
+    %%knas..
     htemp = h(:,i);
-    gradJ_W2 = gradJ_W2 +  g'*htemp'; % g': Kx1 h:mxN => h(:,i)' = 1xm, => gJW2 = Kxm
+    %size(g)
+    %sizehtemp = size(htemp)
+   ghtemp =  g'*htemp';
+    gradJ_wi = cell2mat(gradJ_W(j));
+    sizegradJWi = size(gradJ_wi)
+    gradJ_W(j) = {gradJ_wi +  ghtemp + 2*lambda*cell2mat(W(j))}; % g': Kx1 h:mxN => h(:,i)' = 1xm, => gJW2 = Kxm
     %step 3
-    g = g*W2;
-    % g = 1xK* Kxm => 1xm
-    s1temp = s1(:,i); %mx1
-%% INDICATOR FUNCTION IND 1 if true, 0 if false.
-    s1temp(s1temp>0) =1;
-    s1temp(s1temp<0) =0;
-    g = g*diag(s1temp);  
-    %% gets me to think max(0,s1) is not correct
-    %step 4
-    gradJ_b1 = gradJ_b1 + g;
-    gradJ_W1 = gradJ_W1 + g'*Xbat';
+        if(j>1)
+        g = g*cell2mat(W(j));
+        % g = 1xK* Kxm => 1xm
+        %% should it be s(j-1) here check 
+        si = cell2mat(s(j-1));
+        %%si = cell2mat(s(j)); version 2 s(j) not s(j-1)
+        sjtemp = si(:,i); %mx1
+    %% INDICATOR FUNCTION IND 1 if true, 0 if false.
+        sjtemp(sjtemp>0) =1;
+        sjtemp(sjtemp<0) =0;
+        g = g*diag(sjtemp);
+        end
+    end
+%     %% gets me to think max(0,s1) is not correct
+%     %step 4
+%     gradJ_b1 = gradJ_b1 + g;
+%     gradJ_W1 = gradJ_W1 + g'*Xbat';
 
 
 end
-% avarge gradients for W  and b, and add regularization term to gradients for W.
-gradJ_W1Avg = gradJ_W1./N + 2*lambda*W1; 
-gradJ_b1Avg = gradJ_b1'./N;   
 
-gradJ_W2Avg = gradJ_W2./N + 2*lambda*W2; 
-gradJ_b2Avg = gradJ_b2'./N;  
+%% should probably be removed?
+for i = 1:k
+% avarge gradients for W  and b, and add regularization term to gradients for W.
+gradJ_WAvg(i) = {cell2mat(gradJ_W(i))./N} 
+gradJ_bAvg(i) = {cell2mat(gradJ_b(i))./N}   
+ 
+end
 
 %% return as cell?
 
-grad_b = {gradJ_b1Avg, gradJ_b2Avg};
-grad_W = {gradJ_W1Avg, gradJ_W2Avg};
+grad_b = gradJ_bAvg;
+grad_W = gradJ_WAvg;
 
 end
 
 
-function [errorb1,errorb2,errorW1,errorW2]= displayError(grad_b,grad_bnum,grad_W, grad_Wnum,margin)
-tb1 = cell2mat(grad_b(1,1));
-tb2 = cell2mat(grad_b(1,2));
-tw1 = cell2mat(grad_W(1,1));
-tw2 = cell2mat(grad_W(1,2));
+function [errorb,errorW,sumerrorb,sumerrorW]= displayError(grad_b,grad_bnum,grad_W, grad_Wnum,margin)
 
-tb1num = cell2mat(grad_bnum(1,1));
-tb2num = cell2mat(grad_bnum(2,1));
-tw1num = cell2mat(grad_Wnum(1,1));
-tw2num = cell2mat(grad_Wnum(2,1));
-
-errorb1 = ComputeError(tb1,tb1num,margin);
-errorb2 = tb2-tb2num
-errorW1 = ComputeError(tw1,tw1num,margin); 
-errorW2 = ComputeError(tw2,tw2num,margin);
+k = size(grad_W,1)
+% kinError = k
+errorb= cell(1,k);
+errorW = cell(1,k);
+for i = 1:k-1
+    tb = cell2mat(grad_b(i));
+%     tbsize = size(tb)
+    tw = cell2mat(grad_W(i));
+%     twsize = size(tw)
+    tbnum = cell2mat(grad_bnum(i));
+    twnum = cell2mat(grad_Wnum(i));
+    errorb(i) = {ComputeError(tb,tbnum,margin)};
+    errorW(i) = {ComputeError(tw,twnum,margin)};
+end
+errorW(k) = {ComputeError(cell2mat(grad_W(k)), cell2mat(grad_Wnum(k)),margin)};
+errorb(k) = {cell2mat(grad_b(k))- cell2mat(grad_bnum(k))};
 
 %% they are more or less the same.
-sumerrorb1 = sum(sum(errorb1))
-sumerrorb2 =  sum(sum(errorb2))
-sumerrorW1 = sum(sum(errorW1))
-sumerrorW2 = sum(sum(errorW2))
+sumerrorb = zeros(1,k);
+sumerrorW = zeros(1,k);
+
+for i = 1:k
+    errbi = cell2mat(errorb(i));
+    errWi = cell2mat(errorW(i));
+%     sizeofstoredCostbi =size(errbi)
+%     sizeofstoredCostWi =size(errWi)
+    sumerrorb(1,i) = sum(sum(errbi))
+    sumerrorW(1,i) = sum(sum(errWi))
+end
+
+
+
 end
 
 
@@ -331,18 +372,39 @@ function [P,x,si] = EvaluateClassifier(X, W,b)
     % W2 Kxm
     % b1 m × 1 
     % b2 K × 1
-  k= size(W,2);
-    si = cell(1,k);
-    x = cell(1,k);
-    x(1) = X;
+     %% should this really be k or should it be size(W,1) +1
+    %% borja har ngt knas
+    k= size(W,1); %% why is k=1?
+    si = cell(k,1);
+    x = cell(k,1);
+    % if i = 0;...
+    x(1) = {X};
+    %%kis = k
     for i = 1:k-1
-        si(i) = cell2mat(W(i))*cell2mat(x(i)) + cell2mat(b(i));
-        x(i+1) = max(0,cell2mat(si(i)))                           
+        Wi = cell2mat(W(i));
+        xi = cell2mat(x(i));
+        bi = cell2mat(b(i));
+        sitemp = Wi*xi + bi;
+        %sizesitemp = size(sitemp)
+        si(i) = {sitemp};
+        x(i+1) ={max(0,sitemp)};
+%         size_h = max(0,sitemp)
     end
     %think about this, should it not be included? menaing only as variable
     %s
-    si(k) = cell2mat(W(k))*cell2mat(x(k))+cell2mat(b(k));
+    Wk = cell2mat(W(k));
+    xk = cell2mat(x(k));
+    bk = cell2mat(b(k));
+%     Wksize = size(Wk)
+%     xksize = size(xk)
+%     bksize =size(bk)
+    si_k = Wk*xk + bk;
+    %% si_k should be KxN dvs  ex 10x3
+    si(k) = {si_k};
+%     sizesi_k = size(cell2mat(si(k)))
+
     P= softMax(si(k));
+%     P_size = size(P)
 end
 
 
@@ -350,6 +412,7 @@ end
 function P = softMax(s)
     %%think this is needed
     s= cell2mat(s);
+    %size_s_in_Softmax = size(s);
     [srow,~] = size(s);
     onesVec = ones(srow,srow); %10x10, s= 10x100   = > dim: 10x100
     f= exp(s);
@@ -364,7 +427,7 @@ end
 function J = ComputeCost(X, Y, W, b, lambda)
     %W contains both W1 and W2
     %b contains b1 and b2
-    k =size(W,2)
+    k =size(W,2);
     
     [p,h] = EvaluateClassifier(X,W,b);
     % KxN.*kxN => dim:kxN for every column of the matrix 
@@ -397,20 +460,25 @@ function [W,b] = initializeParams(m,K,d,seed,stnd)
 % b2 K × 1
 %m = array [50,30,...20] each value is number of nodes for the ith:layer
 rng(seed);
-k = size(m,2)
-W = cell(1,k)
-b = cell(1,k)
+k = size(m,2)+1
+W = cell(k,1)
+b = cell(k,1)
+prevm= zeros(k,1)
+prevm(1) = d;
 
 for i = 1: k-1
-    W(i) = stnd*randn(m(i),d); %mxd
-    b(i) = stnd*randn(m(i),1); % mx1
+    W(i) = {stnd*randn(m(i),prevm(i))}; %mxd
+    prevm(i+1) = m(i)
+    b(i) = {stnd*randn(m(i),1)}; % mx1
  
     
 end
     
-W(k) = stnd*randn(K,m(k-1)); %Kxm
-b(k) = stnd*randn(K,1); % Kx1
-
+W(k) = {stnd*randn(K,prevm(k))}; %Kxm
+b(k) = {stnd*randn(K,1)}; % Kx1
+display("hej")
+W
+b
 end
 
 %% Load Batch
