@@ -1,0 +1,19 @@
+git add 
+git commit -m "comment"
+git push 
+
+Genereal
+git init
+As an example, you usually run git push origin master to push your local changes to your online repository.
+To rename a branch, you'd use the same git push command, but you would add one more argument: the name of the new branch. For example:
+
+git push  <REMOTENAME> <LOCALBRANCHNAME>:<REMOTEBRANCHNAME> 
+This pushes the LOCALBRANCHNAME to your REMOTENAME, but it is renamed to REMOTEBRANCHNAME.
+git push origin newbranch
+//pushes to the new branch
+git branch
+//checks which branches exits and current branch you are in
+git branch newbranch 
+//creates a new branch called newbranch
+git checkout newbranch
+//switches to the newbranch
